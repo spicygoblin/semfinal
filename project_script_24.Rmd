@@ -1,0 +1,49 @@
+---
+title: "CFA SEM Final Project"
+author: "Rachel"
+date: "2024-04-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r export dataset and clean}
+
+library(haven)
+library(tidyverse)
+
+IPLS_Cleaned_Scored_Dataset <- read_sav("C:/Users/rache/Desktop/montclair/spring 24/SEM/IPLS_Cleaned_Scored_Dataset.sav")
+
+Yoni_desc <- IPLS_Cleaned_Scored_Dataset %>% 
+  select(starts_with("Yoni_"), starts_with("YONI_"), Gender, Age, LE_role1) %>%
+  select(-Yoni_affect1st, -Yoni_affect2nd, -Yoni_cog1st, -Yoni_cog2nd, -Yoni_phys1st, -Yoni_phys2nd, -Yoni_cogaff2nd)
+
+Yoni_items <- Yoni_desc %>% 
+  select(-Gender, -Age, -LE_role1)
+
+```
+
+```{r power analysis}
+
+#https://era.library.ualberta.ca/items/41513514-cddc-4b35-9117-bd411c19e12e/view/f45bf1b1-0ae4-4720-b78b-6413e70ec0e4/simulations_in_r.pdf
+
+
+
+```
+
+```{r missing data}
+
+sum(complete.cases(Yoni_items))
+
+IPLS_MTS_nodesc_comp <- IPLS_MTS_nodesc[rowSums(is.na(IPLS_MTS_nodesc)) < ncol(IPLS_MTS_nodesc), ]
+
+```
+
