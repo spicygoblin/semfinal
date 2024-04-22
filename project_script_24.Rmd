@@ -14,36 +14,139 @@ knitr::opts_chunk$set(echo = TRUE)
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r export dataset and clean}
+```{r libraries}
 
 library(haven)
 library(tidyverse)
+library(mice)
+library(lavaan)
+library(MVN)
+library(psych)
+library(car)
+library(semTools)
 
-IPLS_Cleaned_Scored_Dataset <- read_sav("C:/Users/rache/Desktop/montclair/spring 24/SEM/IPLS_Cleaned_Scored_Dataset.sav")
+```
 
-Yoni_desc <- IPLS_Cleaned_Scored_Dataset %>% 
-  select(starts_with("Yoni_"), starts_with("YONI_"), Gender, Age, LE_role1) %>%
-  select(-Yoni_affect1st, -Yoni_affect2nd, -Yoni_cog1st, -Yoni_cog2nd, -Yoni_phys1st, -Yoni_phys2nd, -Yoni_cogaff2nd)
+```{r export dataset and clean}
 
-Yoni_items <- Yoni_desc %>% 
+IPLS_Cleaned_Scored_Dataset <- read_sav("IPLS_Cleaned_Scored_Dataset.sav")
+
+MTS_c1_desc <- IPLS_Cleaned_Scored_Dataset %>% 
+  select(Julia, Iris, Nancy, Jane, Kim, John, Tracy, Mary, Frank, Eric, Paula, Tay, Gender, Age, LE_role1) 
+
+MTS_c1_items <- MTS_c1_desc %>% 
   select(-Gender, -Age, -LE_role1)
 
+MTS_c2_desc <- IPLS_Cleaned_Scored_Dataset %>% 
+  select (Matt, Bob, Emily, Jack, Alex, Sam, Mark, Kat, Chris, Harry, Mike, Walt, Gender, Age, LE_role1) 
+
+MTS_c2_items <- MTS_c2_desc %>% 
+  select(-Gender, -Age, -LE_role1)
+
+
 ```
 
-```{r power analysis}
-
-#https://era.library.ualberta.ca/items/41513514-cddc-4b35-9117-bd411c19e12e/view/f45bf1b1-0ae4-4720-b78b-6413e70ec0e4/simulations_in_r.pdf
-
-
-
-```
 
 ```{r missing data}
 
-sum(complete.cases(Yoni_items))
+sum(complete.cases(MTS_c1_items))
 
-IPLS_MTS_nodesc_comp <- IPLS_MTS_nodesc[rowSums(is.na(IPLS_MTS_nodesc)) < ncol(IPLS_MTS_nodesc), ]
+sum(complete.cases(MTS_c2_items))
+
+md.pattern(MTS_c1_items, rotate.names = T)
+md.pattern(MTS_c2_items, rotate.names = T)
+
+complete_rows <- complete.cases(MTS_c2_desc$Matt)
+MTS_c2_desc_comp <- MTS_c2_desc[complete_rows, ]
+
+complete_rows_it <- complete.cases(MTS_c2_items$Matt)
+MTS_c2_items_comp <- MTS_c2_items[complete_rows_it, ]
 
 ```
 
+```{r Preliminary}
+
+#multivariate normality tests
+result <- mvn(MTS_c2_items_comp, mvnTest = "hz")
+
+result$multivariateNormality
+result$univariateNormality
+
+#descriptive
+describe(MTS_c2_items_comp)
+cor_matrix <- cor(MTS_c2_items_comp)
+eigen(cor_matrix)$values
+
+MTS_c2_desc_comp$Age[MTS_c2_desc_comp$Age == ""] <- NA
+MTS_c2_desc_comp$Age <- as.numeric(MTS_c2_desc_comp$Age)
+mean(MTS_c2_desc_comp$Age, na.rm=T)
+
+```
+
+```{r CFA}
+
+#single factor
+
+MTS_CFA_single <- '
+  leadership_understanding =~ Matt + Bob + Emily + Jack + Alex + Sam + Mark + Kat + Chris + Harry + Mike + Walt
+'
+
+MTS_single_fit <- cfa(MTS_CFA_single, data = MTS_c2_desc_comp)
+summary(MTS_single_fit, standardized = T, rsq = T, fit.measures = T)
+
+#multi-factor
+MTS_CFA_multi <- '
+  SL_NSL =~ Alex + Kat + Chris + Walt
+  SL_SNL =~ Emily + Jack + Mark + Sam
+  SL_NSNL =~ Harry + Bob + Mike + Mark
+  
+  SL_NSL ~~ SL_SNL
+  SL_SNL ~~ SL_NSNL
+'
+MTS_multi_fit <- cfa(MTS_CFA_multi , data = MTS_c2_desc_comp)
+summary(MTS_multi_fit, standardized = T, rsq = T, fit.measures = T)
+
+#nested
+MTS_CFA_hierarchal <- '
+  SL_NSL =~ Alex + Kat + Chris + Walt
+  SL_SNL =~ Emily + Jack + Mark + Sam
+  SL_NSNL =~ Harry + Bob + Mike + Mark
+  
+  Leadership_Understanding =~ SL_NSL + SL_SNL + SL_NSNL
+'
+MTS_hier_fit <- cfa(MTS_CFA_hierarchal , data = MTS_c2_desc_comp)
+summary(MTS_hier_fit, standardized = T, rsq = T, fit.measures = T)
+```
+
+```{r respecification}
+
+modification_indices <- modificationIndices(MTS_single_fit)
+
+MTS_CFA_respec <- '
+  leadership_understanding =~ Matt + Bob + Emily + Jack + Alex + Sam + Mark + Kat + Chris + Harry + Mike + Walt
+  
+  leadership_understanding ~~ 1*leadership_understanding
+  
+  Bob ~~ Jack
+  Emily ~~ Alex
+  Sam ~~ Mark
+  Kat ~~ Chris
+  Chris ~~ Mike
+  Harry ~~ Mike
+'
+
+MTS_respec_fit <- cfa(MTS_CFA_respec, data = MTS_c2_desc_comp)
+summary(MTS_respec_fit, standardized = T, rsq = T, fit.measures = T)
+
+lavTestLRT(MTS_single_fit, MTS_respec_fit)
+
+reliability(MTS_respec_fit)
+
+inspect(MTS_respec_fit, what = "cor.all")
+
+
+```
+
+```{r model fit}
+
+```
