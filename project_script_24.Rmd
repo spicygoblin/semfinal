@@ -114,6 +114,16 @@ mean(MTS_c1_desc_comp$Age, na.rm=T)
 
 
 ##Global & subscale scores of C1 and C2
+c1_totalscores <- MTS_global_sub[MTS_global_sub$Condition == 1, ]
+c1_totalscores <- c1_totalscores[!is.na(c1_totalscores$Condition), ]
+
+describe(c1_totalscores)
+
+c2_totalscores <- MTS_global_sub[MTS_global_sub$Condition == 2, ]
+c2_totalscores <- c2_totalscores[!is.na(c2_totalscores$Condition), ]
+
+describe(c2_totalscores)
+
 ```
 
 ```{r CFA C2}
@@ -208,10 +218,9 @@ observed_corr_respec_fit_c2 <- lavCor(MTS_respec_fit)
 
 ```
 
-```{r fit c1}
+```{r fit c1 cross val}
 
 #single factor
-
 MTS_CFA_single_c1 <- '
   leadership_understanding =~ Julia + Iris + Nancy + Jane + Kim + John + Tracy + Mary + Frank + Eric + Paula + Tay
 '
@@ -242,9 +251,25 @@ MTS_CFA_hierarchal_c1 <- '
 MTS_hier_fit_c1 <- cfa(MTS_CFA_hierarchal_c1, data = MTS_c1_desc_comp)
 summary(MTS_hier_fit_c1, standardized = T, rsq = T, fit.measures = T)
 
+```
 
+```{r c1 single factor assessment}
+#only for single factor because the other two could not be solved
+
+#reliability measures
+reliability(MTS_single_fit_c1)
+
+#additional measures
+fit_measures_single_fit_c1 <- fitMeasures(MTS_single_fit_c1 )
+PE_single_fit_c1 <- parameterEstimates(MTS_single_fit_c1)
+cov_matrix_single_fit_c1 <- fitted(MTS_single_fit_c1 )
+corr_matrix_single_fit_c1 <- inspect(MTS_single_fit_c1 , what = "cor.all")
+resid_cov_matrix_single_fit_c1 <- resid(MTS_single_fit_c1 )
+resid_corr_matrix_single_fit_c1 <- resid(MTS_single_fit_c1 , "cor")
+observed_corr_single_fit_c1 <- lavCor(MTS_single_fit_c1 )
 
 ```
+
 
 ```{r respec c1}
 modification_indices_c1 <- modificationIndices(MTS_single_fit_c1)
@@ -254,7 +279,7 @@ MTS_CFA_respec_c1 <- '
   
   leadership_understanding ~~ 1*leadership_understanding
   
-  #julia and jane does not pass the 3.84 threshold but i included it anyway because close enough
+  #julia and jane does not pass the 3.84 threshold but i included it anyway because close enough at 3.82
   Julia ~~ Jane 
   John ~~ Frank
   Eric ~~ Paula
@@ -263,15 +288,19 @@ MTS_CFA_respec_c1 <- '
 MTS_respec_fit_c1 <- cfa(MTS_CFA_respec_c1, data = MTS_c1_desc_comp)
 summary(MTS_respec_fit_c1, standardized = T, rsq = T, fit.measures = T)
 
+#compare fit to original model
 lavTestLRT(MTS_single_fit_c1, MTS_respec_fit_c1)
 
+#reliability measures
 reliability(MTS_respec_fit_c1)
 
-inspect(MTS_respec_fit_c1, what = "cor.all")
-
-
-```
-
-```{r model fit}
+#additional measures
+fit_measures_respect_fit_c1 <- fitMeasures(MTS_respec_fit_c1 )
+PE_respect_fit_c1 <- parameterEstimates(MTS_respec_fit_c1 )
+cov_matrix_respect_fit_c1 <- fitted(MTS_respec_fit_c1 )
+corr_matrix_respect_fit_c1 <- inspect(MTS_respec_fit_c1 , what = "cor.all")
+resid_cov_matrix_respect_fit_c1 <- resid(MTS_respec_fit_c1 )
+resid_corr_matrix_respect_fit_c1 <- resid(MTS_respec_fit_c1 , "cor")
+observed_corr_respect_fit_c1 <- lavCor(MTS_respec_fit_c1 )
 
 ```
