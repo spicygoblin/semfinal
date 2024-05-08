@@ -81,10 +81,10 @@ MTS_c2_items_comp <- MTS_c2_items[complete_rows_it, ]
 
 ##Condition 2
 #multivariate normality tests
-result <- mvn(MTS_c2_items_comp, mvnTest = "hz")
+result_c2 <- mvn(MTS_c2_items_comp, mvnTest = "hz")
 
-result$multivariateNormality
-result$univariateNormality
+result_c2$multivariateNormality
+result)c2$univariateNormality
 
 #descriptive
 describe(MTS_c2_items_comp)
@@ -98,10 +98,10 @@ mean(MTS_c2_desc_comp$Age, na.rm=T)
 
 ##Condition 1
 #multivariate normality tests
-result <- mvn(MTS_c1_items_comp, mvnTest = "hz")
+result_c1 <- mvn(MTS_c1_items_comp, mvnTest = "hz")
 
-result$multivariateNormality
-result$univariateNormality
+result_c1$multivariateNormality
+result_c1$univariateNormality
 
 #descriptive
 describe(MTS_c1_items_comp)
