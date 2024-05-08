@@ -29,33 +29,40 @@ library(semTools)
 
 ```{r export dataset and clean}
 
+#export dataset
 IPLS_Cleaned_Scored_Dataset <- read_sav("IPLS_Cleaned_Scored_Dataset.sav")
 
+#c1 items
 MTS_c1_desc <- IPLS_Cleaned_Scored_Dataset %>% 
-  select(Julia, Iris, Nancy, Jane, Kim, John, Tracy, Mary, Frank, Eric, Paula, Tay, Gender, Age, LE_role1) 
+  select(Julia, Iris, Nancy, Jane, Kim, John, Tracy, Mary, Frank, Eric, Paula, Tay, Gender, Age) 
 
 MTS_c1_items <- MTS_c1_desc %>% 
-  select(-Gender, -Age, -LE_role1)
+  select(-Gender, -Age)
 
+#c2 items
 MTS_c2_desc <- IPLS_Cleaned_Scored_Dataset %>% 
-  select (Matt, Bob, Emily, Jack, Alex, Sam, Mark, Kat, Chris, Harry, Mike, Walt, Gender, Age, LE_role1) 
+  select (Matt, Bob, Emily, Jack, Alex, Sam, Mark, Kat, Chris, Harry, Mike, Walt, Gender, Age) 
 
 MTS_c2_items <- MTS_c2_desc %>% 
-  select(-Gender, -Age, -LE_role1)
+  select(-Gender, -Age)
 
+#global and subscale scores
+MTS_global_sub <- IPLS_Cleaned_Scored_Dataset %>% 
+  select(Proportion_Correct_SL_TL, Proportion_Correct_SL_S, Proportion_Correct_SL_VP, Proportion_Correct_Overall, Condition)
 
 ```
 
 
 ```{r missing data}
 
+#checking for nas and patterns
 sum(complete.cases(MTS_c1_items))
-
 sum(complete.cases(MTS_c2_items))
 
 md.pattern(MTS_c1_items, rotate.names = T)
 md.pattern(MTS_c2_items, rotate.names = T)
 
+#getting rid of participants who did not complete the MTS
 complete_rows <- complete.cases(MTS_c1_desc$Julia)
 MTS_c1_desc_comp <- MTS_c1_desc[complete_rows, ]
 
@@ -72,6 +79,7 @@ MTS_c2_items_comp <- MTS_c2_items[complete_rows_it, ]
 
 ```{r Preliminary}
 
+##Condition 2
 #multivariate normality tests
 result <- mvn(MTS_c2_items_comp, mvnTest = "hz")
 
@@ -81,16 +89,31 @@ result$univariateNormality
 #descriptive
 describe(MTS_c2_items_comp)
 cor_matrix <- cor(MTS_c2_items_comp)
-eigen(cor_matrix)$values
 
+#mean and sd of age
 MTS_c2_desc_comp$Age[MTS_c2_desc_comp$Age == ""] <- NA
 MTS_c2_desc_comp$Age <- as.numeric(MTS_c2_desc_comp$Age)
 mean(MTS_c2_desc_comp$Age, na.rm=T)
 
+
+##Condition 1
+#multivariate normality tests
+result <- mvn(MTS_c1_items_comp, mvnTest = "hz")
+
+result$multivariateNormality
+result$univariateNormality
+
+#descriptive
+describe(MTS_c1_items_comp)
+cor_matrix <- cor(MTS_c1_items_comp)
+
+#mean and sd of age
 MTS_c1_desc_comp$Age[MTS_c1_desc_comp$Age == ""] <- NA
 MTS_c1_desc_comp$Age <- as.numeric(MTS_c1_desc_comp$Age)
 mean(MTS_c1_desc_comp$Age, na.rm=T)
 
+
+##Global & subscale scores of C1 and C2
 ```
 
 ```{r CFA C2}
@@ -137,12 +160,13 @@ MTS_CFA_respec <- '
   
   leadership_understanding ~~ 1*leadership_understanding
   
+  Matt ~~ Harry
+  Matt ~~ Mike
+  Bob ~~ Emily
   Bob ~~ Jack
+  Bob ~~ Sam
+  Bob ~~ Chris
   Emily ~~ Alex
-  Sam ~~ Mark
-  Kat ~~ Chris
-  Chris ~~ Mike
-  Harry ~~ Mike
 '
 
 MTS_respec_fit <- cfa(MTS_CFA_respec, data = MTS_c2_desc_comp)
@@ -203,15 +227,10 @@ MTS_CFA_respec_c1 <- '
   
   leadership_understanding ~~ 1*leadership_understanding
   
-  Julia ~~ Jane
-  Julia ~~ Mary
-  Julia ~~ Kim
-  Nancy ~~ Kim
-  Jane ~~ John
-  Iris ~~ John
-  Julia ~~ Iris
-  Frank ~~ Tay
-  Kim ~~ Tay
+  #julia and jane does not pass the 3.84 threshold but i included it anyway because close enough
+  Julia ~~ Jane 
+  John ~~ Frank
+  Eric ~~ Paula
 '
 
 MTS_respec_fit_c1 <- cfa(MTS_CFA_respec_c1, data = MTS_c1_desc_comp)
