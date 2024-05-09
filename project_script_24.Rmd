@@ -84,7 +84,7 @@ MTS_c2_items_comp <- MTS_c2_items[complete_rows_it, ]
 result_c2 <- mvn(MTS_c2_items_comp, mvnTest = "hz")
 
 result_c2$multivariateNormality
-result)c2$univariateNormality
+result_c2$univariateNormality
 
 #descriptive
 describe(MTS_c2_items_comp)
@@ -144,6 +144,7 @@ MTS_CFA_multi <- '
   
   SL_NSL ~~ SL_SNL
   SL_SNL ~~ SL_NSNL
+  SL_NSL ~~ SL_NSNL
 '
 MTS_multi_fit <- cfa(MTS_CFA_multi , data = MTS_c2_desc_comp)
 summary(MTS_multi_fit, standardized = T, rsq = T, fit.measures = T)
@@ -164,7 +165,7 @@ summary(MTS_hier_fit, standardized = T, rsq = T, fit.measures = T)
 #only for single factor because the other two could not be solved
 
 #reliability measures
-reliability(MTS_single_fit )
+reliability(MTS_single_fit)
 
 #additional measures
 fit_measures_single_fit_c2 <- fitMeasures(MTS_single_fit )
@@ -186,6 +187,7 @@ modification_indices <- modificationIndices(MTS_single_fit)
 #respectification of single factor model
 MTS_CFA_respec <- '
   leadership_understanding =~ Matt + Bob + Emily + Jack + Alex + Sam + Mark + Kat + Chris + Harry + Mike + Walt
+  
   
   leadership_understanding ~~ 1*leadership_understanding
   
@@ -275,12 +277,10 @@ observed_corr_single_fit_c1 <- lavCor(MTS_single_fit_c1 )
 modification_indices_c1 <- modificationIndices(MTS_single_fit_c1)
 
 MTS_CFA_respec_c1 <- '
-  leadership_understanding =~ Julia + Iris + Nancy + Jane + Kim + John + Tracy + Mary + Frank + Eric + Paula + Tay
+ leadership_understanding =~ Julia + Iris + Nancy + Jane + Kim + John + Tracy + Mary + Frank + Eric + Paula + Tay
   
   leadership_understanding ~~ 1*leadership_understanding
   
-  #julia and jane does not pass the 3.84 threshold but i included it anyway because close enough at 3.82
-  Julia ~~ Jane 
   John ~~ Frank
   Eric ~~ Paula
 '
@@ -289,7 +289,7 @@ MTS_respec_fit_c1 <- cfa(MTS_CFA_respec_c1, data = MTS_c1_desc_comp)
 summary(MTS_respec_fit_c1, standardized = T, rsq = T, fit.measures = T)
 
 #compare fit to original model
-lavTestLRT(MTS_single_fit_c1, MTS_respec_fit_c1)
+##lavTestLRT(MTS_single_fit_c1, MTS_respec_fit_c1) ##this gave me an error, so calculated aic and bic diff by hand
 
 #reliability measures
 reliability(MTS_respec_fit_c1)
